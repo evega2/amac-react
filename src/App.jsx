@@ -20,8 +20,28 @@ function DatosVacante({ vacante }) {
 
 function DetalleVacante({ vacantes }) {
   const { id } = useParams()
+  const { sesion, perfil } = useAuth()
+  const [mensaje, setMensaje] = useState('')
+  const [enviando, setEnviando] = useState(false)
   const vacante = vacantes.find((item) => String(item.id) === id)
   if (!vacante) return <p>Esta vacante no está disponible. <Link to="/">Volver al listado</Link></p>
+  async function postularme() {
+    setMensaje('')
+    setEnviando(true)
+    try {
+      const { error } = await supabase.from('solicitudes').insert({
+        vacante_id: vacante.id,
+        candidato_id: sesion.user.id,
+      })
+      if (error?.code === '23505') setMensaje('Ya te postulaste a esta vacante.')
+      else if (error) setMensaje('No se pudo enviar la solicitud.')
+      else setMensaje('¡Listo! Tu solicitud fue enviada.')
+    } catch {
+      setMensaje('No se pudo enviar la solicitud.')
+    } finally {
+      setEnviando(false)
+    }
+  }
 
   return (
     <section className="panel">
@@ -31,6 +51,15 @@ function DetalleVacante({ vacantes }) {
       <h2>Requisitos</h2><p>{vacante.requisitos}</p>
       <h2>Prestaciones</h2><p>{vacante.prestaciones}</p>
       <div className="acciones">
+        {!sesion && <Link to="/login">Inicia sesión para postularte</Link>}
+        {perfil?.rol === 'candidato' && (
+          perfil.aprobado ? (
+            <button type="button" className="boton" onClick={postularme} disabled={enviando}>
+              Postularme
+            </button>
+          ) : <p>Tu registro aún no ha sido aprobado por AMAC.</p>
+        )}
+        {mensaje && <p role="status">{mensaje}</p>}
         {vacante.telefono_contacto && (
           <a className="boton" href={`tel:${vacante.telefono_contacto}`}>Llamar</a>
         )}
