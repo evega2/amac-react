@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Link, Route, Routes, useParams } from 'react-router-dom'
+import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import Login from './pages/Login.jsx'
 import Registro from './pages/Registro.jsx'
+import { useAuth } from './context/AuthContext.jsx'
 
 const pesos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 
@@ -80,6 +81,17 @@ function ListadoVacantes({ vacantes }) {
 }
 
 export default function App() {
+  const { sesion } = useAuth()
+  const navigate = useNavigate()
+
+  async function cerrarSesion() {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      window.alert('No se pudo cerrar sesión. Inténtalo de nuevo.')
+      return
+    }
+    navigate('/')
+  }
   const [resultado, setResultado] = useState(null)
 
   useEffect(() => {
@@ -106,6 +118,13 @@ export default function App() {
       <a className="saltar-contenido" href="#principal">Saltar al contenido</a>
       <header className="encabezado contenedor">
         <Link className="nombre-sitio" to="/">AMAC · Bolsa de trabajo</Link>
+        {sesion ? (
+          <button type="button" className="boton" onClick={cerrarSesion}>
+            Cerrar sesión
+          </button>
+        ) : (
+          <Link to="/login">Iniciar sesión</Link>
+        )}
       </header>
       <main id="principal" className="contenedor" tabIndex={-1}>
         {!supabase ? <p role="alert">Falta configurar la conexión con Supabase.</p>
