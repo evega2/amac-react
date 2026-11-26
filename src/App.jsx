@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, Route, Routes, useParams } from 'react-router-dom'
 import { supabase } from './lib/supabase'
+import Login from './pages/Login.jsx'
+import Registro from './pages/Registro.jsx'
 
 const pesos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 
@@ -110,6 +112,9 @@ export default function App() {
           : !resultado ? <p role="status">Cargando vacantes…</p>
           : resultado.error ? <p role="alert">No se pudieron cargar las vacantes.</p>
           : <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/registro" element={<Registro />} />
+              <Route path="/empresa/registro" element={<Registro rol="empresa" />} />
               <Route path="/" element={<ListadoVacantes vacantes={resultado.vacantes} />} />
               <Route path="/vacantes/:id" element={<DetalleVacante vacantes={resultado.vacantes} />} />
               <Route path="*" element={<p>Página no encontrada. <Link to="/">Volver al listado</Link></p>} />
