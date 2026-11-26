@@ -4,6 +4,8 @@ import { supabase } from './lib/supabase'
 import Login from './pages/Login.jsx'
 import Registro from './pages/Registro.jsx'
 import { useAuth } from './context/AuthContext.jsx'
+import MisSolicitudes from './pages/MisSolicitudes.jsx'
+import RutaProtegida from './components/RutaProtegida.jsx'
 
 const pesos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 
@@ -160,6 +162,7 @@ export default function App() {
           : !resultado ? <p role="status">Cargando vacantes…</p>
           : resultado.error ? <p role="alert">No se pudieron cargar las vacantes.</p>
           : <Routes>
+<Route path="/mis-solicitudes" element={<RutaProtegida rol="candidato"><MisSolicitudes /></RutaProtegida>} />
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Registro />} />
               <Route path="/empresa/registro" element={<Registro rol="empresa" />} />
