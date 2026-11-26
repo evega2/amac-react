@@ -1,122 +1,120 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react'
+import { Link, Route, Routes, useParams } from 'react-router-dom'
+import { supabase } from './lib/supabase'
 
-function App() {
-  const [count, setCount] = useState(0)
+const pesos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 
+function DatosVacante({ vacante }) {
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      <p><strong>Sueldo:</strong> {pesos.format(vacante.sueldo)} MXN al mes</p>
+      <p><strong>Ubicación:</strong> {vacante.ubicacion}</p>
+      <p><strong>Horario:</strong> {vacante.horario}</p>
+      <p><strong>Categoría:</strong> {vacante.categoria}</p>
     </>
   )
 }
 
-export default App
+function DetalleVacante({ vacantes }) {
+  const { id } = useParams()
+  const vacante = vacantes.find((item) => String(item.id) === id)
+  if (!vacante) return <p>Esta vacante no está disponible. <Link to="/">Volver al listado</Link></p>
+
+  return (
+    <section className="panel">
+      <h1>{vacante.titulo}</h1>
+      <DatosVacante vacante={vacante} />
+      <h2>Descripción</h2><p>{vacante.descripcion}</p>
+      <h2>Requisitos</h2><p>{vacante.requisitos}</p>
+      <h2>Prestaciones</h2><p>{vacante.prestaciones}</p>
+      <div className="acciones">
+        {vacante.telefono_contacto && (
+          <a className="boton" href={`tel:${vacante.telefono_contacto}`}>Llamar</a>
+        )}
+        <Link className="boton boton-secundario" to="/">Volver al listado</Link>
+      </div>
+    </section>
+  )
+}
+
+function ListadoVacantes({ vacantes }) {
+  const [busqueda, setBusqueda] = useState('')
+  const [horario, setHorario] = useState('')
+  const texto = busqueda.trim().toLocaleLowerCase('es-MX')
+  const horarios = [...new Set(vacantes.map((vacante) => vacante.horario))].sort()
+  const resultados = vacantes.filter((vacante) =>
+    [vacante.titulo, vacante.ubicacion].some((dato) => dato.toLocaleLowerCase('es-MX').includes(texto)) &&
+    (!horario || vacante.horario === horario)
+  )
+
+  return (
+    <section className="panel">
+      <h1>Listado de vacantes</h1>
+      <form className="filtros" role="search" onSubmit={(event) => event.preventDefault()}>
+        <div>
+          <label htmlFor="busqueda">Buscar por puesto o ubicación</label>
+          <input id="busqueda" type="search" value={busqueda} onChange={(event) => setBusqueda(event.target.value)} />
+        </div>
+        <div>
+          <label htmlFor="horario">Horario</label>
+          <select id="horario" value={horario} onChange={(event) => setHorario(event.target.value)}>
+            <option value="">Todos los horarios</option>
+            {horarios.map((opcion) => <option key={opcion}>{opcion}</option>)}
+          </select>
+        </div>
+      </form>
+      {resultados.length === 0 && <p role="status">No hay vacantes para mostrar.</p>}
+      <div className="vacantes">
+        {resultados.map((vacante) => (
+          <article className="tarjeta" key={vacante.id}>
+            <h2>{vacante.titulo}</h2>
+            <DatosVacante vacante={vacante} />
+            <Link className="boton" to={`/vacantes/${vacante.id}`}>Ver vacante: {vacante.titulo}</Link>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+export default function App() {
+  const [resultado, setResultado] = useState(null)
+
+  useEffect(() => {
+    if (!supabase) return
+    let activo = true
+    async function cargar() {
+      try {
+        const { data, error } = await supabase
+          .from('vacantes')
+          .select('id,titulo,sueldo,ubicacion,horario,categoria,descripcion,requisitos,prestaciones,telefono_contacto')
+          .eq('estado', 'activa')
+          .order('creada_en', { ascending: false })
+        if (activo) setResultado({ vacantes: data ?? [], error: Boolean(error) })
+      } catch {
+        if (activo) setResultado({ vacantes: [], error: true })
+      }
+    }
+    cargar()
+    return () => { activo = false }
+  }, [])
+
+  return (
+    <>
+      <a className="saltar-contenido" href="#principal">Saltar al contenido</a>
+      <header className="encabezado contenedor">
+        <Link className="nombre-sitio" to="/">AMAC · Bolsa de trabajo</Link>
+      </header>
+      <main id="principal" className="contenedor" tabIndex={-1}>
+        {!supabase ? <p role="alert">Falta configurar la conexión con Supabase.</p>
+          : !resultado ? <p role="status">Cargando vacantes…</p>
+          : resultado.error ? <p role="alert">No se pudieron cargar las vacantes.</p>
+          : <Routes>
+              <Route path="/" element={<ListadoVacantes vacantes={resultado.vacantes} />} />
+              <Route path="/vacantes/:id" element={<DetalleVacante vacantes={resultado.vacantes} />} />
+              <Route path="*" element={<p>Página no encontrada. <Link to="/">Volver al listado</Link></p>} />
+            </Routes>}
+      </main>
+    </>
+  )
+}
