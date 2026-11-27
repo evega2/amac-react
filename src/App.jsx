@@ -114,7 +114,7 @@ function ListadoVacantes({ vacantes }) {
 }
 
 export default function App() {
-  const { sesion } = useAuth()
+  const { sesion, perfil } = useAuth()
   const navigate = useNavigate()
 
   async function cerrarSesion() {
@@ -151,6 +151,7 @@ export default function App() {
       <a className="saltar-contenido" href="#principal">Saltar al contenido</a>
       <header className="encabezado contenedor">
         <Link className="nombre-sitio" to="/">AMAC · Bolsa de trabajo</Link>
+        {perfil?.rol === 'candidato' && (<Link to="/mis-solicitudes">Mis solicitudes</Link>)}
         {sesion ? (
           <button type="button" className="boton" onClick={cerrarSesion}>
             Cerrar sesión
